@@ -1,4 +1,4 @@
-# ViT Autoencoder Training
+# ViT SAE Training
 
 This repository contains the implementation of a sparse autoencoder (SAE) trained on Vision Transformer (ViT) activations. The autoencoder is designed to learn a dictionary of sparse representations from large-scale image datasets.
 
