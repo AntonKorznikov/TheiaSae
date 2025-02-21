@@ -14,17 +14,17 @@ This repository contains the implementation of a sparse autoencoder (SAE) traine
 ## Installation
 
 ### Prerequisites
-Ensure you have Python installed along with the required dependencies:
-
-```bash
-pip install torch torchvision transformers datasets tqdm wandb
-```
-
 Clone the repository:
 
 ```bash
 git clone <repository_url>
 cd <repository_name>
+```
+
+Ensure you have Python installed along with the required dependencies:
+
+```bash
+pip install -r requirements.txt
 ```
 
 ---
