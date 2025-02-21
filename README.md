@@ -70,20 +70,6 @@ Model checkpoints are saved in `checkpoints/`, and training logs are stored in W
 
 ---
 
-## Model Details
-The `BatchTopKSAE` model is a sparse autoencoder that:
-- Uses **ReLU activations**
-- Applies a **top-k thresholding** strategy
-- Ensures decoder weights remain unit-normed
-
-### Key Components:
-- `compute_activations()`: Computes the sparse activations
-- `encode()`: Encodes input activations
-- `decode()`: Decodes sparse representations back to the original space
-- `update_threshold()`: Dynamically updates activation thresholds
-
----
-
 ## Dataset
 The default dataset is **ImageNet**, streamed using the `datasets` library. The dataset path can be modified in `config.py`:
 ```python
