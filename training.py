@@ -4,7 +4,7 @@ from logs import init_wandb, log_wandb, save_checkpoint
 
 
 def train_sae(sae, activation_store, cfg):
-    num_batches = cfg["num_tokens"] // cfg["batch_size"]
+    num_batches = int(cfg["num_tokens"] // cfg["batch_size"])
     optimizer = torch.optim.Adam(sae.parameters(), lr=cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]))
     pbar = tqdm.trange(num_batches)
 

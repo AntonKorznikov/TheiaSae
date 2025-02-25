@@ -45,7 +45,7 @@ def save_checkpoint(wandb_run, sae, cfg, step):
 
     # Create and log artifact
     artifact = wandb.Artifact(
-        name=f"{cfg['name']}_{step}",
+        name=f"{cfg['name'].replace("/", "-").replace(":", "_")}_{step}",
         type="model",
         description=f"Model checkpoint at step {step}",
     )
