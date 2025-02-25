@@ -7,10 +7,10 @@ from transformers import AutoModel
 import wandb
 
 
-wandb.login(
-    relogin=True,
-    key='d990520d05d824bd7bee94561ed951bd40114944',
-    )
+# wandb.login(
+#     relogin=True,
+#     key='........',
+#     )
 
 
 
