@@ -122,6 +122,17 @@ class BatchTopKSAE(BaseAutoencoder):
             self.num_batches_not_active > self.config["n_batches_to_dead"]
         ).sum()
         sae_out = self.postprocess_output(x_reconstruct, x_mean, x_std)
+        
+        if x_mean is not None:
+            original_x = x * x_std + x_mean
+        else:
+            original_x = x
+        sae_out = sae_out.to(original_x.dtype)
+        mse_original = F.mse_loss(sae_out, original_x)
+        var_original = original_x.var(unbiased=False)
+        fvu = mse_original / (var_original + 1e-8)  # Prevent division by zero
+
+
         output = {
             "sae_out": sae_out,
             "feature_acts": acts_topk,
@@ -133,6 +144,7 @@ class BatchTopKSAE(BaseAutoencoder):
             "l1_norm": l1_norm,
             "aux_loss": aux_loss,
             "threshold": self.threshold,
+            "fvu": fvu, 
         }
         return output
 

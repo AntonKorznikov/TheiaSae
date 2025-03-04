@@ -15,16 +15,18 @@ import wandb
 
 
 cfg = get_default_cfg()
-cfg["model_name"] = "theaiinstitute/theia-base-patch16-224-cdiv"
-cfg["dataset_path"] = "evanarlian/imagenet_1k_resized_256"
+cfg["model_name"] = "theaiinstitute/theia-tiny-patch16-224-cdiv"
+cfg["dataset_path"] = "data/imagenet_1k_resized_256"
+# cfg["dataset_path"] = "evanarlian/imagenet_1k_resized_256"
 cfg["sae_type"] = 'batch-topk'
 cfg["dict_size"] = 2**15
-cfg["top_k"] = 40
-cfg['wandb_project'] = 'theia-sae'
+cfg["top_k"] = 30
+cfg['wandb_project'] = 'theia-sae2.1'
 cfg['act_size'] = 768
 cfg['device'] = 'cuda:4'
-cfg["num_tokens"] = 8e8
+cfg["num_tokens"] = 1e8
 cfg["model_batch_size"] = 64
+cfg["num_batches_in_buffer"] = 500
 
 cfg = post_init_cfg(cfg)
 sae = BatchTopKSAE(cfg)

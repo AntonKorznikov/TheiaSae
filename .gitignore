@@ -1,2 +1,3 @@
 __pycache__
 wandb/
+/data/imagenet_1k_resized_256
