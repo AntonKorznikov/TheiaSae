@@ -1,14 +1,17 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, RandomSampler
 from datasets import load_dataset, load_from_disk
 import torchvision.transforms as T
 from tqdm import tqdm
-import random
+import torchvision.utils as vutils
+import wandb
+import torchvision
 
 class ImageActivationsStore:
-    def __init__(self, model, cfg: dict):
+    def __init__(self, model, cfg: dict, wandb_run=None):
         self.model = model
-        # self.dataset = iter(load_dataset(cfg["dataset_path"], split="train", streaming=True))
+        self.wandb_run = wandb_run 
         self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=42))
         self.image_column = self._get_image_column()
         self.model_batch_size = cfg["model_batch_size"]
@@ -16,15 +19,19 @@ class ImageActivationsStore:
         self.num_batches_in_buffer = cfg["num_batches_in_buffer"]
         self.config = cfg
         self.image_size = cfg.get("image_size", 224)
-        
-        # Define a transformation to ensure images are resized to the correct size
-        # and converted to a uint8 tensor with shape (H, W, C) as expected by the model.
+
+        # Initialize the transformation pipeline
         self.transform = T.Compose([
             T.Resize((self.image_size, self.image_size)),
-            T.ToTensor(),  # converts to (C, H, W) float tensor in [0, 1]
-            T.Lambda(lambda x: (x * 255).to(torch.uint8)),  # scale to [0, 255] and convert to uint8
-            T.Lambda(lambda x: x.permute(1, 2, 0))  # convert to (H, W, C)
+            T.ToTensor(),  # Converts PIL.Image to (C, H, W) tensor in [0, 1]
+            T.Lambda(lambda x: (x * 255).to(torch.uint8)),  # Scale to [0, 255]
+            T.Lambda(lambda x: x.permute(1, 2, 0)),  # Change to (H, W, C)
         ])
+
+        # Initialize activation buffer, dataloader, and iterator
+        self.activation_buffer = self._fill_buffer()
+        self.dataloader = self._get_dataloader()
+        self.dataloader_iter = iter(self.dataloader)
 
     def _get_image_column(self):
         # Try to infer the correct column name for the image data.
@@ -60,41 +67,48 @@ class ImageActivationsStore:
 
     def _fill_buffer(self):
         all_activations = []
-        # Fill the buffer with a number of batches as defined in the config.
         for i in tqdm(range(self.num_batches_in_buffer), desc="Processing batches"):
-        # for i in range(self.num_batches_in_buffer):
-        #     print(i, '/' , self.num_batches_in_buffer)
             batch_images = self.get_batch_images()
-            # Assume activations are of shape (B, num_tokens, act_size)
-            # Flatten the first two dimensions so that each row corresponds to one token activation.
+            
+            # New: Log images to WandB
+            if self.wandb_run and i % self.config.get("log_images_every_buffer", 5) == 0:
+                with torch.no_grad():
+                    # Convert from (B, H, W, C) to (B, C, H, W)
+                    log_images = batch_images[:25].permute(0, 3, 1, 2).cpu()
+                    
+                    # Create image grid
+                    grid = torchvision.utils.make_grid(
+                        log_images,
+                        nrow=5,
+                        normalize=False,
+                        scale_each=False
+                    )
+                    
+                    # Log to WandB
+                    self.wandb_run.log({
+                        "buffer_images": wandb.Image(grid, caption=f"Buffer Batch {i}")
+                    })
+
+            # Existing processing code
             activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"])
-            # num_activations = activations.shape[0]
-            # random_indices = random.sample(range(1, num_activations), num_activations//2) 
-            # random_activations = activations[random_indices]
             all_activations.append(activations)
         return torch.cat(all_activations, dim=0)
 
     def _get_dataloader(self):
-        # Create a PyTorch DataLoader over the activation buffer.
         return DataLoader(
             TensorDataset(self.activation_buffer),
             batch_size=self.config["batch_size"],
-            shuffle=True
+            shuffle=True,  
         )
-
     def next_batch(self):
-        # Return the next mini-batch of activations.
+        torch.cuda.empty_cache()
         try:
-            return next(self.dataloader_iter)[0]
+            batch = next(self.dataloader_iter)
         except (StopIteration, AttributeError):
-            # Delete existing activations and dataloader to free memory
-            if hasattr(self, 'activation_buffer'):
-                del self.activation_buffer
-            if hasattr(self, 'dataloader'):
-                del self.dataloader
-            if hasattr(self, 'dataloader_iter'):
-                del self.dataloader_iter
-            self.activation_buffer = self._fill_buffer()
-            self.dataloader = self._get_dataloader()
+            if not hasattr(self, 'activation_buffer') or not hasattr(self, 'dataloader'):
+                self.activation_buffer = self._fill_buffer()
+                self.dataloader = self._get_dataloader()
             self.dataloader_iter = iter(self.dataloader)
-            return next(self.dataloader_iter)[0]
+            batch = next(self.dataloader_iter)
+        # Extract the tensor from the tuple (TensorDataset returns batches as tuples)
+        return batch[0]  # <-- Fix here

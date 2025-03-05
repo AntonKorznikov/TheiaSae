@@ -2,13 +2,12 @@ import torch
 import tqdm
 from logs import init_wandb, log_wandb, save_checkpoint
 
-
-def train_sae(sae, activation_store, cfg):
+def train_sae(sae, activation_store, cfg, wandb_run):
     num_batches = int(cfg["num_tokens"] // cfg["batch_size"])
     optimizer = torch.optim.Adam(sae.parameters(), lr=cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]))
     pbar = tqdm.trange(num_batches)
 
-    wandb_run = init_wandb(cfg)
+    activation_store.wandb_run = wandb_run 
     
     for i in pbar:
         batch = activation_store.next_batch()
@@ -24,4 +23,3 @@ def train_sae(sae, activation_store, cfg):
         optimizer.zero_grad()
 
     save_checkpoint(wandb_run, sae, cfg, i)
-    
