@@ -21,6 +21,7 @@ class ImageActivationsStore:
         self.image_size = cfg.get("image_size", 224)
         self.current_step = 0
         self.seen_images = 0
+        self.seen_rgb_images = 0
 
         # Initialize the transformation pipeline
         self.transform = T.Compose([
@@ -67,6 +68,7 @@ class ImageActivationsStore:
             if image_tensor.shape[-1] != 3:
                 continue  # Skip this image
             all_images.append(image_tensor)
+            self.seen_rgb_images += len(image_tensor)
         # Stack images into a single tensor and move to the proper device.
         # The resulting shape is (B, H, W, C)
         batch = torch.stack(all_images, dim=0).to(self.device)
@@ -101,6 +103,17 @@ class ImageActivationsStore:
                     self.wandb_run.log({
                         "buffer_images": wandb.Image(grid, caption=f"Buffer Batch {i}")
                     }, step = self.current_step)
+
+                    self.wandb_run.log({
+                        "number_of_seen_images": self.seen_images
+                    }, step = self.current_step)
+
+                    self.wandb_run.log({
+                        "number_of_seen_rgb_images": self.seen_rgb_images
+                    }, step = self.current_step)
+                    
+
+            
 
             # Existing processing code
             activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"])
