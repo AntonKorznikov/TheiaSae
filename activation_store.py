@@ -20,6 +20,7 @@ class ImageActivationsStore:
         self.config = cfg
         self.image_size = cfg.get("image_size", 224)
         self.current_step = 0
+        self.seen_images = 0
 
         # Initialize the transformation pipeline
         self.transform = T.Compose([
@@ -57,6 +58,8 @@ class ImageActivationsStore:
             except:
                 self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=43))
                 sample = next(self.dataset)
+
+            self.seen_images += len(sample)
                 
             image = sample[self.image_column]
             # Apply the transformation to get a tensor of shape (H, W, C)
