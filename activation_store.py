@@ -136,4 +136,4 @@ class ImageActivationsStore:
             self.dataloader_iter = iter(self.dataloader)
             batch = next(self.dataloader_iter)
             # Extract the tensor from the tuple (TensorDataset returns batches as tuples)
-        return batch
+        return batch[0]
