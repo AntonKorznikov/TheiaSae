@@ -52,7 +52,12 @@ class ImageActivationsStore:
         all_images = []
         # Accumulate enough images for one model batch
         while len(all_images) < self.model_batch_size:
-            sample = next(self.dataset)
+            try:
+                sample = next(self.dataset)
+            except:
+                self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=43))
+                sample = next(self.dataset)
+                
             image = sample[self.image_column]
             # Apply the transformation to get a tensor of shape (H, W, C)
             image_tensor = self.transform(image)
