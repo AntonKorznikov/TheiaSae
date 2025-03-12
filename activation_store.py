@@ -78,13 +78,16 @@ class ImageActivationsStore:
     def get_activations(self, batch_images: torch.Tensor):
         with torch.no_grad():
             # Extract the intermediate features (which include patch tokens and [CLS] token)
-            activations = self.model.forward_feature(batch_images)
+            activations = self.model.forward_feature(batch_images) # направили 64 картинки, 
+            #print('размер активаций', activations.shape) #torch.Size([64, 196, 192]) теперь torch.Size([64, 196, 768]) 
+
+
         return activations
 
     def _fill_buffer(self):
         all_activations = []
         for i in tqdm(range(self.num_batches_in_buffer), desc="Processing batches"):
-            batch_images = self.get_batch_images()
+            batch_images = self.get_batch_images() #64 картинки
             
             # New: Log images to WandB
             if self.wandb_run and i % self.config.get("log_images_every_buffer", 5) == 0:
@@ -117,9 +120,11 @@ class ImageActivationsStore:
             
 
             # Existing processing code
-            activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"])
+            activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"]) # act size = 768
+            # here torch.Size([3136, 768])
+
             all_activations.append(activations)
-        return torch.cat(all_activations, dim=0)
+        return torch.cat(all_activations, dim=0) #[ финально получим 3136 *250 = 784000, 768]
 
     def _get_dataloader(self):
         return DataLoader(
@@ -132,7 +137,7 @@ class ImageActivationsStore:
         try:
             batch = next(self.dataloader_iter)
         except:
-            self.activation_buffer = self._fill_buffer()
+            self.activation_buffer = self._fill_buffer()# [784000, 768]
             self.dataloader = self._get_dataloader()
             self.dataloader_iter = iter(self.dataloader)
             batch = next(self.dataloader_iter)

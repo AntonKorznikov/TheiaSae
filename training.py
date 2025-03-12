@@ -3,15 +3,15 @@ import tqdm
 from logs import init_wandb, log_wandb, save_checkpoint
 
 def train_sae(sae, activation_store, cfg, wandb_run):
-    num_batches = int(cfg["num_tokens"] // cfg["batch_size"])
+    num_batches = int(cfg["num_tokens"] // cfg["batch_size"]) # 1e8/ 4096 = 24000
     optimizer = torch.optim.Adam(sae.parameters(), lr=cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]))
     pbar = tqdm.trange(num_batches)
 
     activation_store.wandb_run = wandb_run 
-    
+    # 250 раз то есть тут будет 4096 * 250 = (1024000, 768)
     for i in pbar:
         activation_store.set_current_step(i)
-        batch = activation_store.next_batch()
+        batch = activation_store.next_batch() #4096 768 такая размерность тут
         sae_output = sae(batch)
         log_wandb(sae_output, i, wandb_run)
 

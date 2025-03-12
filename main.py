@@ -16,7 +16,7 @@ wandb.login(
 
 
 cfg = get_default_cfg()
-cfg["model_name"] = "theaiinstitute/theia-tiny-patch16-224-cdiv"
+cfg["model_name"] = "theaiinstitute/theia-base-patch16-224-cdiv"
 cfg["dataset_path"] = "data/imagenet_1k_resized_256"
 # cfg["dataset_path"] = "evanarlian/imagenet_1k_resized_256"
 cfg["sae_type"] = 'batch-topk'
@@ -27,7 +27,7 @@ cfg['act_size'] = 768
 cfg['device'] = 'cuda:0'
 cfg["num_tokens"] = 1e8
 cfg["model_batch_size"] = 64
-cfg["num_batches_in_buffer"] = 250
+cfg["num_batches_in_buffer"] = 100
 cfg["log_images_every_buffer"] = 100  # Log every 100th batch during buffer filling
 cfg["max_buffer_images"] = 5
 
@@ -40,5 +40,5 @@ model =  torch.compile(model)
 wandb_run = init_wandb(cfg)
 
 activations_store = ImageActivationsStore(model, cfg, wandb_run)
-print(cfg["sae_type"])
+
 train_sae(sae, activations_store, cfg, wandb_run)
