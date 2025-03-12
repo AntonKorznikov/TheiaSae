@@ -26,9 +26,9 @@ cfg['act_size'] = 768
 cfg['device'] = 'cuda:0'
 cfg["num_tokens"] = 1e8
 cfg["model_batch_size"] = 64
-cfg["num_batches_in_buffer"] = 300
-cfg["log_images_every_buffer"] = 10  # Log every 100th batch during buffer filling
-cfg["max_buffer_images"] = 25
+cfg["num_batches_in_buffer"] = 250
+cfg["log_images_every_buffer"] = 100  # Log every 100th batch during buffer filling
+cfg["max_buffer_images"] = 5
 
 cfg = post_init_cfg(cfg)
 sae = BatchTopKSAE(cfg)
@@ -39,4 +39,5 @@ model = AutoModel.from_pretrained(cfg["model_name"], trust_remote_code=True).to(
 wandb_run = init_wandb(cfg)
 
 activations_store = ImageActivationsStore(model, cfg, wandb_run)
+print(cfg["sae_type"])
 train_sae(sae, activations_store, cfg, wandb_run)

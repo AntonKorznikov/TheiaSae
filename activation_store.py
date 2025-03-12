@@ -19,6 +19,7 @@ class ImageActivationsStore:
         self.num_batches_in_buffer = cfg["num_batches_in_buffer"]
         self.config = cfg
         self.image_size = cfg.get("image_size", 224)
+        self.current_step = 0
 
         # Initialize the transformation pipeline
         self.transform = T.Compose([
@@ -42,6 +43,10 @@ class ImageActivationsStore:
             return "img"
         else:
             raise ValueError("Dataset must have an 'image' or 'img' column.")
+        
+    def set_current_step(self, step: int):
+        self.current_step = step
+
 
     def get_batch_images(self):
         all_images = []
@@ -74,12 +79,12 @@ class ImageActivationsStore:
             if self.wandb_run and i % self.config.get("log_images_every_buffer", 5) == 0:
                 with torch.no_grad():
                     # Convert from (B, H, W, C) to (B, C, H, W)
-                    log_images = batch_images[:25].permute(0, 3, 1, 2).cpu()
+                    log_images = batch_images[:self.config['max_buffer_images']].permute(0, 3, 1, 2).cpu()
                     
                     # Create image grid
                     grid = torchvision.utils.make_grid(
                         log_images,
-                        nrow=5,
+                        nrow=self.config['max_buffer_images'] // 5,
                         normalize=False,
                         scale_each=False
                     )
@@ -87,7 +92,7 @@ class ImageActivationsStore:
                     # Log to WandB
                     self.wandb_run.log({
                         "buffer_images": wandb.Image(grid, caption=f"Buffer Batch {i}")
-                    })
+                    }, step = self.current_step)
 
             # Existing processing code
             activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"])
@@ -104,11 +109,10 @@ class ImageActivationsStore:
         torch.cuda.empty_cache()
         try:
             batch = next(self.dataloader_iter)
-        except (StopIteration, AttributeError):
-            if not hasattr(self, 'activation_buffer') or not hasattr(self, 'dataloader'):
-                self.activation_buffer = self._fill_buffer()
-                self.dataloader = self._get_dataloader()
+        except:
+            self.activation_buffer = self._fill_buffer()
+            self.dataloader = self._get_dataloader()
             self.dataloader_iter = iter(self.dataloader)
             batch = next(self.dataloader_iter)
-        # Extract the tensor from the tuple (TensorDataset returns batches as tuples)
+            # Extract the tensor from the tuple (TensorDataset returns batches as tuples)
         return batch[0]  # <-- Fix here

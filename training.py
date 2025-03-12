@@ -10,6 +10,7 @@ def train_sae(sae, activation_store, cfg, wandb_run):
     activation_store.wandb_run = wandb_run 
     
     for i in pbar:
+        activation_store.set_current_step(i)
         batch = activation_store.next_batch()
         sae_output = sae(batch)
         log_wandb(sae_output, i, wandb_run)

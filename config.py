@@ -21,13 +21,13 @@ def get_default_cfg():
         "wandb_project": "sparse_autoencoders",
         "input_unit_norm": False,
         "perf_log_freq": 1000,
-        "sae_type": "topk",
+        "sae_type": "batch-topk",
         "n_batches_to_dead": 20,
 
         # (Batch)TopKSAE specific
         "top_k": 30,
         "top_k_aux": 512,
-        "aux_penalty": 0.0,
+        "aux_penalty": 1/32,
     }
     default_cfg = post_init_cfg(default_cfg)
     return default_cfg
