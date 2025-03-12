@@ -22,6 +22,7 @@ class ImageActivationsStore:
         self.current_step = 0
         self.seen_images = 0
         self.seen_rgb_images = 0
+        self.cfg = cfg
 
         # Initialize the transformation pipeline
         self.transform = T.Compose([
@@ -57,7 +58,7 @@ class ImageActivationsStore:
             try:
                 sample = next(self.dataset)
             except:
-                self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=43))
+                self.dataset = iter(load_from_disk(self.cfg["dataset_path"]).shuffle(seed=43))
                 sample = next(self.dataset)
 
             self.seen_images += 1

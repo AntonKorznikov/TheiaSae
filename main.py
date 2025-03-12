@@ -6,6 +6,7 @@ from config import get_default_cfg, post_init_cfg
 from transformers import AutoModel
 import wandb
 from logs import init_wandb, log_wandb, save_checkpoint
+import torch
 
 wandb.login(
      relogin=True,
@@ -34,7 +35,7 @@ cfg = post_init_cfg(cfg)
 sae = BatchTopKSAE(cfg)
 
 model = AutoModel.from_pretrained(cfg["model_name"], trust_remote_code=True).to(cfg['device'])
-
+model =  torch.compile(model)
 
 wandb_run = init_wandb(cfg)
 
