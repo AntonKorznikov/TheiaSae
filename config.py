@@ -22,7 +22,7 @@ def get_default_cfg():
         "input_unit_norm": False,
         "perf_log_freq": 1000,
         "sae_type": "batch-topk",
-        "n_batches_to_dead": 20,
+        "n_batches_to_dead": 500,
 
         # (Batch)TopKSAE specific
         "top_k": 30,
