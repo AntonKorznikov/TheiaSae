@@ -60,7 +60,7 @@ class ImageActivationsStore:
                 self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=43))
                 sample = next(self.dataset)
 
-            self.seen_images += len(sample)
+            self.seen_images += 1
                 
             image = sample[self.image_column]
             # Apply the transformation to get a tensor of shape (H, W, C)
@@ -68,7 +68,7 @@ class ImageActivationsStore:
             if image_tensor.shape[-1] != 3:
                 continue  # Skip this image
             all_images.append(image_tensor)
-            self.seen_rgb_images += len(image_tensor)
+            self.seen_rgb_images += 1
         # Stack images into a single tensor and move to the proper device.
         # The resulting shape is (B, H, W, C)
         batch = torch.stack(all_images, dim=0).to(self.device)
