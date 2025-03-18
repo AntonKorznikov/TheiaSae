@@ -1,3 +1,5 @@
 __pycache__
 wandb/
+neuron_activations/
+checkpoints/
 /data/imagenet_1k_resized_256

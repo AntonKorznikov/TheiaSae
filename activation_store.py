@@ -8,14 +8,19 @@ import random
 class ImageActivationsStore:
     def __init__(self, model, cfg: dict):
         self.model = model
+        self.cfg = cfg
         # self.dataset = iter(load_dataset(cfg["dataset_path"], split="train", streaming=True))
-        self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle(seed=42))
+        if self.cfg['shuffle']:
+            self.dataset = iter(load_from_disk(cfg["dataset_path"]).shuffle())
+        else:
+            self.dataset = iter(load_from_disk(cfg["dataset_path"]))
         self.image_column = self._get_image_column()
         self.model_batch_size = cfg["model_batch_size"]
         self.device = cfg["device"]
         self.num_batches_in_buffer = cfg["num_batches_in_buffer"]
         self.config = cfg
         self.image_size = cfg.get("image_size", 224)
+        self.shuffle = True
         
         # Define a transformation to ensure images are resized to the correct size
         # and converted to a uint8 tensor with shape (H, W, C) as expected by the model.
@@ -40,7 +45,12 @@ class ImageActivationsStore:
         all_images = []
         # Accumulate enough images for one model batch
         while len(all_images) < self.model_batch_size:
-            sample = next(self.dataset)
+            try:
+                sample = next(self.dataset)
+            except:
+                self.dataset = iter(load_from_disk(self.cfg["dataset_path"]).shuffle(seed=43))
+                sample = next(self.dataset)
+
             image = sample[self.image_column]
             # Apply the transformation to get a tensor of shape (H, W, C)
             image_tensor = self.transform(image)
@@ -68,10 +78,10 @@ class ImageActivationsStore:
             # Assume activations are of shape (B, num_tokens, act_size)
             # Flatten the first two dimensions so that each row corresponds to one token activation.
             activations = self.get_activations(batch_images).reshape(-1, self.config["act_size"])
-            # num_activations = activations.shape[0]
-            # random_indices = random.sample(range(1, num_activations), num_activations//2) 
-            # random_activations = activations[random_indices]
-            all_activations.append(activations)
+            num_activations = activations.shape[0]
+            random_indices = random.sample(range(1, num_activations), num_activations//4) 
+            random_activations = activations[random_indices]
+            all_activations.append(random_activations)
         return torch.cat(all_activations, dim=0)
 
     def _get_dataloader(self):

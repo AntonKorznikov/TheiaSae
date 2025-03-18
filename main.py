@@ -15,7 +15,7 @@ import wandb
 
 
 cfg = get_default_cfg()
-cfg['device'] = 'cuda:4'
+cfg['device'] = 'cuda:0'
 cfg = post_init_cfg(cfg)
 
 sae = BatchTopKSAE(cfg)
