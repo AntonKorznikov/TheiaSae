@@ -1,3 +1,7 @@
 __pycache__
 wandb/
-/data/imagenet_1k_resized_256
+data/
+feature_stats/
+storages/
+temp/
+checkpoints/
