@@ -14,10 +14,7 @@ def train_sae(sae, activation_store, cfg):
     # Determine number of batches based on total embeddings or configured tokens
     if hasattr(activation_store, 'total_samples'):
         # Calculate based on actual number of samples in TensorStorage
-        num_batches = min(
-            int(cfg["num_tokens"] // cfg["batch_size"]),
-            int(activation_store.total_samples // cfg["batch_size"])
-        )
+        num_batches = int(cfg["num_tokens"] // cfg["batch_size"])
         print(f"Training for {num_batches} batches based on {activation_store.total_samples} total samples")
     else:
         # Fall back to the configured number of tokens
@@ -25,7 +22,13 @@ def train_sae(sae, activation_store, cfg):
         print(f"Training for {num_batches} batches based on configured token count")
     
     # Initialize optimizer
-    optimizer = torch.optim.Adam(sae.parameters(), lr=cfg["lr"], betas=(cfg["beta1"], cfg["beta2"]))
+    optimizer = torch.optim.Adam(
+        sae.parameters(), 
+        lr=cfg["lr"], 
+        betas=(cfg["beta1"], cfg["beta2"])
+    )
+    
+    # Create progress bar
     pbar = tqdm.trange(num_batches)
 
     # Initialize wandb logging

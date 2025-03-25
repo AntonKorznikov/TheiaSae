@@ -5,15 +5,52 @@ from config import get_default_cfg, post_init_cfg
 from training import train_sae
 import os
 import sys
+import argparse
 
 # Add the parent directory to the path so we can import TensorStorage
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.datasets.tensor_storage import TensorStorage
+try:
+    from src.datasets.tensor_storage import TensorStorage
+except ImportError:
+    # Try other common import paths
+    try:
+        sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+        from tensor_storage import TensorStorage
+    except ImportError:
+        print("ERROR: Could not import TensorStorage. Please check the import path.")
+        print("Current sys.path:", sys.path)
+        sys.exit(1)
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Train a sparse autoencoder on TensorStorage embeddings')
+    parser.add_argument('--storage_path', type=str, default=None, help='Path to tensor storage')
+    parser.add_argument('--batch_size', type=int, default=None, help='Batch size for training')
+    parser.add_argument('--lr', type=float, default=None, help='Learning rate')
+    parser.add_argument('--dict_size', type=int, default=None, help='Dictionary size (number of features)')
+    parser.add_argument('--top_k', type=int, default=None, help='Top-k for sparse activation')
+    parser.add_argument('--shuffle', action='store_true', help='Whether to shuffle data during training')
+    args = parser.parse_args()
+
     # Get configuration
     cfg = get_default_cfg()
     cfg['device'] = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    # Update config with command line arguments if provided
+    if args.storage_path:
+        cfg['tensor_storage_path'] = args.storage_path
+    if args.batch_size:
+        cfg['batch_size'] = args.batch_size
+    if args.lr:
+        cfg['lr'] = args.lr
+    if args.dict_size:
+        cfg['dict_size'] = args.dict_size
+    if args.top_k:
+        cfg['top_k'] = args.top_k
+    if args.shuffle:
+        cfg['shuffle'] = True
+    
+    # Finalize config
     cfg = post_init_cfg(cfg)
     
     # Print key configuration settings
